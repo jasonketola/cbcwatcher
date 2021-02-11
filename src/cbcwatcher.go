@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gocolly/colly"
 )
@@ -19,7 +20,12 @@ type Product struct {
 	URL         string
 }
 
+
+
 func main() {
+
+	j := 1
+
 	// Instantiate default collector
 	c := colly.NewCollector(
 		colly.AllowedDomains("belmont.craftbeercellar.com"),
@@ -44,7 +50,13 @@ func main() {
 		// Activate detailCollector if the class contains "product-link product-thumbnail"
 		productURL := e.Request.AbsoluteURL(e.Attr("href"))
 		if strings.Contains(e.Attr("class"), "product-link product-thumbnail") {
+			if j > 1500 {
+				time.Sleep(7 * time.Second)
+			}
+
+			fmt.Println("Reviewing ", j, " of 1734")
 			detailCollector.Visit(productURL)
+			j++
 		}
 	})
 
@@ -53,12 +65,18 @@ func main() {
 
 		brand := strings.TrimSpace(strings.TrimLeft(strings.TrimRight(e.ChildText("h6"), "Share: "), "Brand:"))
 
+		if brand == "" {
+			fmt.Println("skipped ", j)
+			return
+		}
+
 		product := Product{
 			Brand:       brand,
 			Name:        e.ChildText("h1"),
 			Description: e.ChildText(`p[class="text-product-desc"]`),
 			URL:         e.Request.URL.String(),
 		}
+
 
 		products = append(products, product)
 	})
