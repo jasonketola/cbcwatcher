@@ -43,6 +43,7 @@ func main() {
 	detailCollector := c.Clone()
 
 	products := make([]Product, 0, 2000)
+	crap := make([]Product, 0, 2000)
 
 	// Before making a request print "Visiting ..."
 	c.OnRequest(func(r *colly.Request) {
@@ -70,7 +71,7 @@ func main() {
 				n++
 				fmt.Println("New ", n)
 				fmt.Println(productURL)
-				time.Sleep(7 * time.Second)
+		//		time.Sleep(7 * time.Second)
 				detailCollector.Visit(productURL)
 			}
 	
@@ -88,11 +89,6 @@ func main() {
 
 		brand := strings.TrimSpace(strings.TrimLeft(strings.TrimRight(e.ChildText("h6"), "Share: "), "Brand:"))
 
-		if brand == "" {
-			s++
-			fmt.Println("skipped ", s)
-			return
-		}
 
 		product := Product{
 			Brand:       brand,
@@ -102,7 +98,13 @@ func main() {
 		}
 
 
-		products = append(products, product)
+		if brand == "" {
+			s++
+			crap = append(crap, product)
+			return
+		} else {
+			products = append(products, product)
+		}
 	})
 
 	for i := 0; i < 18; i++ {
@@ -111,13 +113,19 @@ func main() {
 		c.Visit(myURL)
 	}
 	file, _ := os.Create("products.json")
+	file2,_ := os.Create("crap.json")
 	defer file.Close()
+	defer file2.Close()
 
 	enc := json.NewEncoder(file)
 	enc.SetIndent("", "  ")
 
+	enc2 := json.NewEncoder(file2)
+	enc2.SetIndent("", " ")
+
 	// Dump json to the standard output
 	enc.Encode(products)
+	enc2.Encode(crap)
 	fmt.Println("done")
 
 	println("Reviewed: ", j)
