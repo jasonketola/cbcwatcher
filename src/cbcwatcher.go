@@ -71,7 +71,7 @@ func main() {
 				n++
 				fmt.Println("New ", n)
 				fmt.Println(productURL)
-		//		time.Sleep(7 * time.Second)
+				time.Sleep(7 * time.Second)
 				detailCollector.Visit(productURL)
 			}
 	
