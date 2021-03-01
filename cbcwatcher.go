@@ -9,9 +9,12 @@ import (
 	"strings"
 	"time"
 	"io/ioutil"
+	"net/smtp"
 
+	"github.com/joho/godotenv"
 	"github.com/gocolly/colly"
 )
+
 
 // Product stores information about each product
 type Product struct {
@@ -29,6 +32,13 @@ func main() {
 	k := 0
 	n := 0
 	s := 0
+
+
+	// Load .env file
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env, %v", err)
+	}
 
 	// Instantiate default collector
 	c := colly.NewCollector(
@@ -74,7 +84,6 @@ func main() {
 				time.Sleep(7 * time.Second)
 				detailCollector.Visit(productURL)
 			}
-	
 
 
 
@@ -112,10 +121,17 @@ func main() {
 		time.Sleep(7 * time.Second)
 		c.Visit(myURL)
 	}
-	file, _ := os.Create("products.json")
-	file2,_ := os.Create("crap.json")
+
+
+
+	currentDate := time.Now().Format("2006-01-02")
+
+	file, _ := os.Create("products" + currentDate + ".json")
+	file2,_ := os.Create("crap" + currentDate + ".json")
 	defer file.Close()
 	defer file2.Close()
+	file3, _ := os.OpenFile("products_prior.json", os.O_WRONLY|os.O_APPEND, 0644)
+	defer file3.Close()
 
 	enc := json.NewEncoder(file)
 	enc.SetIndent("", "  ")
@@ -132,4 +148,43 @@ func main() {
 	println("Matched: ", k)
 	println("Skipped: ", s)
 	println("New: ", n-s)
+
+
+	tmp, _ := json.MarshalIndent(products, "", "    ")
+	_, a := file3.WriteString(string(tmp))
+
+	tmp2, _ := json.MarshalIndent(crap, "", "    ")
+	_, b := file3.WriteString(string(tmp2))
+
+	a = b
+        b = a
+
+	emailStuff(tmp)
+}
+
+//Email the new stuff to me
+func emailStuff(newstuff []byte) {
+	host := os.Getenv("EMAIL_HOST")
+	from := os.Getenv("EMAIL_FROM")
+	password := os.Getenv("EMAIL_PASSWORD")
+	port := os.Getenv("EMAIL_PORT")
+	to := os.Getenv("EMAIL_TO")
+
+	currentTime := time.Now()
+
+	msg := "From: " + from + "\n" +
+	"To: " + to + "\n" +
+		"Subject: Newest CBC additions " + currentTime.Format("2006-01-02") + "\n\n"
+
+	addr := fmt.Sprintf("%s:%s", host, port)
+
+	err := smtp.SendMail(addr,
+		smtp.PlainAuth("", from, password, host),
+		from, []string{to}, append([]byte(msg), newstuff...))
+
+	if err != nil {
+		log.Printf("SMTP error: %s", err)
+		return
+	}
+
 }
