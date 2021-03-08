@@ -46,7 +46,7 @@ func main() {
 
 		// Cache responses to prevent multiple download of pages
 		// even if the collector is restarted
-		colly.CacheDir("./cbc_cache"),
+//		colly.CacheDir("./cbc_cache"),
 	)
 
 	// Create another collector to scrape product details
