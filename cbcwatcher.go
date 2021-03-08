@@ -40,6 +40,8 @@ func main() {
 		log.Fatalf("Error loading .env, %v", err)
 	}
 
+	url := os.Getenv("SEARCH_URL")
+
 	// Instantiate default collector
 	c := colly.NewCollector(
 		colly.AllowedDomains("belmont.craftbeercellar.com"),
@@ -117,7 +119,7 @@ func main() {
 	})
 
 	for i := 0; i < 18; i++ {
-		myURL := "https://belmont.craftbeercellar.com/store/search.asp?matchesperpage=100&start=" + strconv.Itoa(i)
+		myURL := url + strconv.Itoa(i)
 		time.Sleep(7 * time.Second)
 		c.Visit(myURL)
 	}
